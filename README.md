@@ -1,6 +1,8 @@
 # Reefer
 *Managing a stable environment in your container.*
 
+![refrigerated container](http://upload.wikimedia.org/wikipedia/commons/6/60/Redundantreefer.JPG)
+
 Reefer is used to render templates based on environment variables
 before exec'ing a given process.
 
