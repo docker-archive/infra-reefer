@@ -14,6 +14,17 @@ import (
 
 const templateSuffix = ".tmpl"
 
+type list []string
+
+func (l *list) String() string {
+	return ""
+}
+
+func (l *list) Set(str string) error {
+	*l = append(*l, str)
+	return nil
+}
+
 type templateData struct {
 }
 
@@ -23,7 +34,9 @@ func (td templateData) Env(str string) string {
 
 type templateList map[string]*template.Template
 
-func (tl templateList) String() string { return "" }
+func (tl templateList) String() string {
+	return ""
+}
 
 func (tl templateList) Set(str string) error {
 	parts := strings.SplitN(str, ":", 2)
@@ -59,9 +72,36 @@ func (tl templateList) Render(root string) error {
 	return nil
 }
 
+func getFilteredEnv(keep []string) (env []string) {
+	for _, k := range keep {
+		v := os.Getenv(k)
+		if v == "" {
+			continue
+		}
+		env = append(env, fmt.Sprintf("%s=%s", k, v))
+	}
+	return env
+}
+
+var keepEnvs = list{
+	"COLORS",
+	"DISPLAY",
+	"HOME",
+	"HOSTNAME",
+	"KRB5CCNAME",
+	"LS_COLORS",
+	"PATH",
+	"PS1",
+	"PS2",
+	"TZ",
+	"XAUTHORITY",
+	"XAUTHORIZATION",
+}
+
 func main() {
 	templates := templateList{}
 	flag.Var(&templates, "t", "Specify template and append optional destination after collons. Format: foo.tmpl:/etc/foo.conf")
+	flag.Var(&keepEnvs, "e", fmt.Sprintf("Keep specified environment variables beside %s", strings.Join(keepEnvs, ",")))
 	flag.Parse()
 	args := flag.Args()
 	if len(args) == 0 {
@@ -69,5 +109,5 @@ func main() {
 	}
 
 	templates.Render("/")
-	panic(syscall.Exec(args[0], args, []string{}))
+	panic(syscall.Exec(args[0], args, getFilteredEnv(keepEnvs)))
 }

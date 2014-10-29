@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -33,15 +34,35 @@ func test(t *testing.T, templates templateList, dest string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log("testRoot", testRoot)
 	if err := templates.Render(testRoot); err != nil {
 		t.Fatal(err)
 	}
-	content, err := ioutil.ReadFile(testRoot + dest)
+	content, err := ioutil.ReadFile(filepath.Join(testRoot, dest))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if string(content) != expectedContent {
 		t.Fatal("Unexpected content: ", content)
 	}
+}
+
+func TestFilterEnv(t *testing.T) {
+	keep := []string{"FOO", "PATH"}
+	os.Setenv("FOO", "bar")
+	os.Setenv("PATH", "/bin:/usr/bin")
+	os.Setenv("FILTERME", "gone")
+	envs := getFilteredEnv(keep)
+
+	if !isIn("FOO=bar", envs) || !isIn("PATH=/bin:/usr/bin", envs) || isIn("FILTERME=gone", envs) {
+		t.Fatal("Unexpected env %#v", envs)
+	}
+}
+
+func isIn(str string, list []string) bool {
+	for _, i := range list {
+		if i == str {
+			return true
+		}
+	}
+	return false
 }
