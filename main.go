@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -109,5 +110,11 @@ func main() {
 	}
 
 	templates.Render("/")
-	panic(syscall.Exec(args[0], args, getFilteredEnv(keepEnvs)))
+	path, err := exec.LookPath(args[0])
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := syscall.Exec(path, args, getFilteredEnv(keepEnvs)); err != nil {
+		log.Fatal(err)
+	}
 }
