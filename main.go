@@ -33,7 +33,12 @@ func (td templateData) Env(str string) string {
 	return os.Getenv(str)
 }
 
-type templateList map[string]*template.Template
+type templateList map[string]target
+
+type target struct {
+	template *template.Template
+	info     os.FileInfo
+}
 
 func (tl templateList) String() string {
 	return ""
@@ -41,6 +46,10 @@ func (tl templateList) String() string {
 
 func (tl templateList) Set(str string) error {
 	parts := strings.SplitN(str, ":", 2)
+	stat, err := os.Stat(parts[0])
+	if err != nil {
+		return err
+	}
 	t, err := template.ParseFiles(parts[0])
 	if err != nil {
 		return err
@@ -51,7 +60,10 @@ func (tl templateList) Set(str string) error {
 	} else {
 		dest = strings.TrimSuffix(parts[0], templateSuffix)
 	}
-	tl[dest] = t
+	tl[dest] = target{
+		template: t,
+		info:     stat,
+	}
 	return nil
 }
 
@@ -66,7 +78,10 @@ func (tl templateList) Render(root string) error {
 		if err != nil {
 			return fmt.Errorf("Couldn't create %s: %s", dest, err)
 		}
-		if err := t.Execute(fh, data); err != nil {
+		if err := fh.Chmod(t.info.Mode()); err != nil {
+			return err
+		}
+		if err := t.template.Execute(fh, data); err != nil {
 			return err
 		}
 	}

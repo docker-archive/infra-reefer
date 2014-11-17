@@ -17,7 +17,9 @@ func TestExplicitConf(t *testing.T) {
 	if err := templates.Set("fixtures/foo.tmpl:/etc/foo.conf"); err != nil {
 		t.Fatal(err)
 	}
-	test(t, templates, "/etc/foo.conf")
+	if err := os.Remove(test(t, templates, "/etc/foo.conf")); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestImplicitConf(t *testing.T) {
@@ -26,10 +28,12 @@ func TestImplicitConf(t *testing.T) {
 	if err := templates.Set("fixtures/foo.tmpl"); err != nil {
 		t.Fatal(err)
 	}
-	test(t, templates, "/fixtures/foo")
+	if err := os.Remove(test(t, templates, "/fixtures/foo")); err != nil {
+		t.Fatal(err)
+	}
 }
 
-func test(t *testing.T, templates templateList, dest string) {
+func test(t *testing.T, templates templateList, dest string) string {
 	testRoot, err := ioutil.TempDir("/tmp", "test-reefer")
 	if err != nil {
 		t.Fatal(err)
@@ -37,13 +41,15 @@ func test(t *testing.T, templates templateList, dest string) {
 	if err := templates.Render(testRoot); err != nil {
 		t.Fatal(err)
 	}
-	content, err := ioutil.ReadFile(filepath.Join(testRoot, dest))
+	file := filepath.Join(testRoot, dest)
+	content, err := ioutil.ReadFile(file)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if string(content) != expectedContent {
 		t.Fatal("Unexpected content: ", content)
 	}
+	return file
 }
 
 func TestFilterEnv(t *testing.T) {
@@ -65,4 +71,25 @@ func isIn(str string, list []string) bool {
 		}
 	}
 	return false
+}
+
+func TestKeepMode(t *testing.T) {
+	templates := templateList{}
+	ofi, err := os.Stat("fixtures/executable.tmpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := templates.Set("fixtures/executable.tmpl"); err != nil {
+		t.Fatal(err)
+	}
+	file := test(t, templates, "/fixtures/executable")
+	fi, err := os.Stat(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if fi.Mode() != ofi.Mode() {
+		t.Fatal("Unexpected mode")
+	}
 }
