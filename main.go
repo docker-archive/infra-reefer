@@ -69,7 +69,10 @@ func (tl templateList) Set(str string) error {
 
 func (tl templateList) Render(root string) error {
 	for d, t := range tl {
-		dest := path.Join(root, d)
+		dest := d
+		if !path.IsAbs(d) {
+			dest = path.Join(root, d)
+		}
 		data := templateData{}
 		if err := os.MkdirAll(filepath.Dir(dest), 0700); err != nil {
 			return fmt.Errorf("Couldn't mkdir %s: %s", filepath.Dir(dest), err)
@@ -99,32 +102,42 @@ func getFilteredEnv(keep []string) (env []string) {
 	return env
 }
 
-var keepEnvs = list{
-	"COLORS",
-	"DISPLAY",
-	"HOME",
-	"HOSTNAME",
-	"KRB5CCNAME",
-	"LS_COLORS",
-	"PATH",
-	"PS1",
-	"PS2",
-	"TZ",
-	"XAUTHORITY",
-	"XAUTHORIZATION",
-}
+var (
+	keepEnvs = list{
+		"COLORS",
+		"DISPLAY",
+		"HOME",
+		"HOSTNAME",
+		"KRB5CCNAME",
+		"LS_COLORS",
+		"PATH",
+		"PS1",
+		"PS2",
+		"TZ",
+		"XAUTHORITY",
+		"XAUTHORIZATION",
+	}
+	root = flag.String("r", "", "Root for relative paths")
+)
 
 func main() {
 	templates := templateList{}
 	flag.Var(&templates, "t", "Specify template and append optional destination after collons. Format: foo.tmpl:/etc/foo.conf")
 	flag.Var(&keepEnvs, "e", fmt.Sprintf("Keep specified environment variables beside %s", strings.Join(keepEnvs, ",")))
 	flag.Parse()
+	if *root == "" {
+		r, err := os.Getwd()
+		if err != nil {
+			log.Fatal("Not root (-r) specified and couldn't get working directory")
+		}
+		*root = r
+	}
 	args := flag.Args()
 	if len(args) == 0 {
 		log.Fatal("No command provided, exiting")
 	}
 
-	templates.Render("/")
+	templates.Render(*root)
 	path, err := exec.LookPath(args[0])
 	if err != nil {
 		log.Fatal(err)

@@ -14,7 +14,7 @@ const (
 func TestExplicitConf(t *testing.T) {
 	templates := templateList{}
 	os.Setenv("FOO", "bar")
-	if err := templates.Set("fixtures/foo.tmpl:/etc/foo.conf"); err != nil {
+	if err := templates.Set("fixtures/foo.tmpl:etc/foo.conf"); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.Remove(test(t, templates, "/etc/foo.conf")); err != nil {
