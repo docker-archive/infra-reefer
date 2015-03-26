@@ -103,6 +103,8 @@ func getFilteredEnv(keep []string) (env []string) {
 }
 
 var (
+	execEnv = []string{}
+	keepAllEnvs = flag.Bool("E", false, "Keep all environment variables")
 	keepEnvs = list{
 		"COLORS",
 		"DISPLAY",
@@ -142,7 +144,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := syscall.Exec(path, args, getFilteredEnv(keepEnvs)); err != nil {
+	if *keepAllEnvs {
+		execEnv = os.Environ()
+	} else {
+		execEnv = getFilteredEnv(keepEnvs)
+	}
+	if err := syscall.Exec(path, args, execEnv); err != nil {
 		log.Fatal(err)
 	}
 }
