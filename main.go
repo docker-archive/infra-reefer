@@ -103,9 +103,9 @@ func getFilteredEnv(keep []string) (env []string) {
 }
 
 var (
-	execEnv = []string{}
+	execEnv     = []string{}
 	keepAllEnvs = flag.Bool("E", false, "Keep all environment variables")
-	keepEnvs = list{
+	keepEnvs    = list{
 		"COLORS",
 		"DISPLAY",
 		"HOME",
@@ -139,7 +139,9 @@ func main() {
 		log.Fatal("No command provided, exiting")
 	}
 
-	templates.Render(*root)
+	if err := templates.Render(*root); err != nil {
+		log.Fatal(err)
+	}
 	path, err := exec.LookPath(args[0])
 	if err != nil {
 		log.Fatal(err)
