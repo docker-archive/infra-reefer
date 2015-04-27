@@ -60,7 +60,7 @@ func TestFilterEnv(t *testing.T) {
 	envs := getFilteredEnv(keep)
 
 	if !isIn("FOO=bar", envs) || !isIn("PATH=/bin:/usr/bin", envs) || isIn("FILTERME=gone", envs) {
-		t.Fatal("Unexpected env %#v", envs)
+		t.Fatal("Unexpected env ", envs)
 	}
 }
 
