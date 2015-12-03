@@ -13,7 +13,7 @@ variables to support [12factor app like configs](http://12factor.net/config).
 First we create a image with nginx and reefer using a Dockerfile like this:
 
     FROM nginx
-    RUN  curl -L https://github.com/docker-infra/reefer/releases/download/v0.0.3/reefer.gz | \
+    RUN  curl -L https://github.com/docker-infra/reefer/releases/download/v0.0.4/reefer.gz | \
          gunzip > /usr/bin/reefer && chmod a+x /usr/bin/reefer
     COPY  templates /
     ENTRYPOINT [ "/usr/bin/reefer", \
